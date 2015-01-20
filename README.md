@@ -8,6 +8,37 @@ Inspired by https://github.com/xu-li/cordova-plugin-wechat
 另外需要注意的是 Android 不仅需要审核通过, 还需要那什么签名吻合, 所以得要 release 的 keystore 来签名.
 关于这个问题写了个指南, 如果 Android 搞不定的可以看看
 [Android 微信 SDK 签名问题](https://github.com/vilic/cordova-plugin-wechat/wiki/Android-%E5%BE%AE%E4%BF%A1-SDK-%E7%AD%BE%E5%90%8D%E9%97%AE%E9%A2%98).
+因为 Android 的开放性, 可能是出于安全考虑, 微信 SDK 除了核对应用包名外, 还会核对应用签名, 所以调试 Android 时, 需要保证应用签名与提交审核的签名一致.
+
+首先, 应用务必要通过审核. 至于审核后修改签名是否立即生效, 我没有做验证.
+
+获得最终可用的应用签名的前提是, 应用是以自己的生成的 keystore 签名的, 所以第一个问题应该是, 如何生成自己的 keystore.
+
+JDK 有一个叫 keytool 的工具可以做这个, 一般情况下既然 Cordova 能正常用, 默认 JDK 已经加入 PATH 了, 那么可以直接运行下面的命令.
+
+keytool -genkey -alias [别名] -keyalg RSA -validity 20000 -keystore [文件名.keystore]
+别名要记下来, 之后会用到.
+
+执行该命令后会要求输入一些信息, 除了密码不要乱填, 其他应该怎么填都可以. 密码貌似有两个, 一个是 keystore 的密码, 一个是 alias 的密码. 当然还有最后确认的时候要填 yes (多半 y 也可以).
+
+现在就算有一个 keystore 了, 把这个文件存到一个安全的地方.
+
+现在打开 platforms/android/ 目录, 新建一个文件 ant.properties, 里面写上
+
+key.store=[到 keystore 文件的路径]
+key.alias=[keystore 的别名]
+key.store.password=[keystore 的密码]
+key.alias.password=[keystore 别名对应的密码]
+到这里, 准备工作就基本就绪了. 执行下面的命令在设备上部署应用:
+
+cordova run android --release --device
+要不要加 --device 可以根据自己的情况来, --release 是一定要加的.
+
+应用部署完成后, 需要在设备上安装下面的这个 apk, https://github.com/mobileresearch/weibo_android_sdk/blob/master/app_signatures.apk?raw=true
+
+安装完成后执行, 输入自己应用的包名, 就可以获得一串签名了. 小心仔细地把签名填写到微信平台 Android 下的相关位置并提交.
+
+到这里, 应该就没有大问题了, 注意需要调试微信相关功能的时候记得用加上 --release, wishes~
 
 ## 安装
 
